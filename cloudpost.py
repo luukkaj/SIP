@@ -10,11 +10,12 @@ class CloudPost(object):
     def __init__(self):
         print("Init cloud connection")
         self.channels = {}
+        self.fields = {}
         #self.supportedUUIDS = []
  
         self.settings_file = 'settings.xml'
         self.load_settings()
-        #self.load_uuids()
+        
 
         # Urls
         self.get_channel_info_url = 'https://api.thingspeak.com/channels.json?api_key=' + self.user_api_key
@@ -26,7 +27,12 @@ class CloudPost(object):
 
     def create_channel(self, address):
         # parsed_address = address.replace(":", "")
-        data = {'api_key': self.user_api_key,  'name' : 'IAQP device: ' + address, 'description': address, 'field1' : 'Ambient Temperature', 'field2' : 'Ambient Humidity', 'field3' : 'Silver Detector', 'field4' : 'Core Temperature' }
+
+        data = {'api_key': self.user_api_key,  'name' : 'IAQP device: ' + address, 'description': address} # 'field1' : 'Ambient Temperature', 'field2' : 'Ambient Humidity', 'field3' : 'Silver Detector', 'field4' : 'Core Temperature' }
+        print("Data before updating:\n{}".format(data));
+        print("self.fields before updating:\n{}".format(self.fields));
+        data.update(self.fields)
+        print("Creating channel with data:\n{}".format(data))
         try:
             r = requests.post(self.create_channel_url, data)
             print(r)
@@ -41,6 +47,7 @@ class CloudPost(object):
         print("\nRESPONSE #")
         print(response)
         print("\n")
+        return None
 
     def get_channel_information(self):
         try:
@@ -101,6 +108,13 @@ class CloudPost(object):
         parsed_file = xml.etree.ElementTree.parse(self.settings_file).getroot()
         found_keys = parsed_file.find('api_keys')
         self.user_api_key = str(found_keys.find('user_api_key').text)
+        uuid_root = parsed_file.find('uuids')
+        for atype in uuid_root.findall('uuid'):
+            new_field = {}
+            field = 'field' +  atype.find('field').text
+            field_name  = atype.find('sensor').text
+            self.fields[field] = field_name
+        print("Cloud settings found fields:\n{}".format(self.fields))
         
     def load_uuids(self):
         parsed_file = xml.etree.ElementTree.parse(self.settings_file).getroot()

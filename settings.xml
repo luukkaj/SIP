@@ -32,7 +32,7 @@
             <sensor>Silver Detector</sensor>
             <location>ambience</location>
             <data_type>int</data_type>
-            <field>3</field>
+            <field>4</field>
             <factor>1</factor>
             <unit>%</unit>
         </uuid>
@@ -41,7 +41,7 @@
             <sensor>Temperature</sensor>
             <location>cpu core</location>
             <data_type>int</data_type>
-            <field>4</field>
+            <field>5</field>
             <factor>0.25</factor>
             <unit>C</unit>
         </uuid>
