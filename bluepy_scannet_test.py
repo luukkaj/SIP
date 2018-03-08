@@ -124,6 +124,7 @@ def preparePeripheral(device):
   peripheral = Peripheral(device)#devices[0].addr, devices[0].addrType)
   peripheral.setDelegate(MyDelegate(peripheral))
   Peripheral.availableHandles = {} # Dictionary containing ['UUID' : cccHandle]
+  Peripheral.availabeChararacteristics = []
   #peripheral.connect()
   time.sleep(2)
   
@@ -142,6 +143,7 @@ def preparePeripheral(device):
           print ("     -CCC handle: 0x{:02X}".format(cccHandle))
           #peripheral.availableHandles.append(cccHandle)
           peripheral.availableHandles[char.uuid]  = cccHandle
+          peripheral.availabeChararacteristics.append(char)
       
   return peripheral
 
@@ -154,15 +156,23 @@ def preparePeripheral(device):
 #peripheral.writeCharacteristic(TempCCC, struct.pack('<bb',0x01,0x00))
 #peripheral.writeCharacteristic(HumCCC, struct.pack('<bb',0x01,0x00))
 #print("Notification turned on for: Temp")
+def int_from_bytes(bytes):
+	value = 0
+	for byte in bytes:
+		value = value*256+int(byte)
+	return value
+
 def main():
+  cloud = CloudPost()
+  cloud.get_channel_information()
+  
   devices = scanIAQDevices();
   print("Devices: {}".format(devices))
   print("Device: {}".format(devices[0]))
 
   peripherals = []
   peripherals.append(preparePeripheral(devices[0]))
-  cloud = CloudPost()
-  cloud.get_channel_information()
+
   
   #print ("Cloud.channels: {}".format(cloud.channels))
   #print("User api key: {}".format(cloud.user_api_key))
@@ -176,8 +186,28 @@ def main():
       #print("New channel: {}".format(peripheral.channel))
   
   while True:
-    print("Waiting for notifications...")
+    print("\n")
     for peripheral in peripherals:
+		for char in peripheral.availabeChararacteristics:
+			for uids in peripheral.channel.supportedUUIDS:
+				if uids['name'] == char.uuid:
+					sensor = uids['sensor']
+					data_type = uids['data_type']
+					factor = uids['factor']
+					unit = uids['unit']
+					field = uids['field']
+			value = factor*struct.unpack(data_type,char.read())[0]
+			peripheral.channel.add_to_buffer(field,value)
+			print("  -{}:\t{} {}".format(sensor,value, unit))
+			
+		try:	  
+			print("\n")
+			peripheral.channel.post() 
+		except:
+			print("Post failed")
+    print("Time: {}\n".format(datetime.datetime.now()))
+    time.sleep(60*15)
+'''
       for uuid in peripheral.availableHandles.keys():
         #print("UUID: {}".format(uuid))
         #print("Field for uuid: {}".format(cloud.get_field_for_UUID(uuid)))
@@ -189,7 +219,7 @@ def main():
         peripheral.writeCharacteristic(ccc, struct.pack('<bb',0x01,0x00))
         if peripheral.waitForNotifications(4.0):
           continue
-        '''
+
         except:
           print("Disconnected from device. Trying to reconnect...")
           try:
@@ -198,10 +228,6 @@ def main():
             time.sleep(5)
           except:
             print("Connection attempt failed")
-          '''  
-      peripheral.channel.post() 
-    print("Time: {}".format(datetime.datetime.now()))
-    time.sleep(60*15)
-    
+'''    
 if __name__ == "__main__":
     main()

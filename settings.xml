@@ -4,7 +4,7 @@
             <name>00002a6e-0000-1000-8000-00805f9b34fb</name>
             <sensor>Temperature</sensor>
             <location>ambience</location>
-            <data_type></data_type>
+            <data_type>h</data_type>
             <field>1</field>
             <factor>0.01</factor>
             <unit>C</unit>
@@ -13,7 +13,7 @@
             <name>00002a6f-0000-1000-8000-00805f9b34fb</name>
             <sensor>Humidity</sensor>
             <location>ambience</location>
-            <data_type></data_type>
+            <data_type>H</data_type>
             <field>2</field>
             <factor>0.01</factor>
             <unit>%</unit>
@@ -22,9 +22,9 @@
             <name>00002a6d-0000-1000-8000-00805f9b34fb</name>
             <sensor>Pressure</sensor>
             <location>ambience</location>
-            <data_type></data_type>
+            <data_type>I</data_type>
             <field>3</field>
-            <factor>0.01</factor>
+            <factor>0.1</factor>
             <unit>hPa</unit>
         </uuid>
         <uuid>
