@@ -61,15 +61,16 @@ class Channel():
     def load_settings(self):
         parsed_file = xml.etree.ElementTree.parse(self.settings_file).getroot()
         # Load thingspeak settings
-        server_element = parsed_file.find('server')
-        thingspeak_element = server_element.find('thingspeak')
+        #server_element = parsed_file.find('server')
+        thingspeak_element = parsed_file.find('thingspeak')
         post_address_element = thingspeak_element.find('post_address')
         self.api_post_url = post_address_element.text
 
-        # Load RF-SensIt settings
+        '''# Load RF-SensIt settings
         server_element = parsed_file.find('server')
         rfsensit_element = server_element.find('rfsensit_tcp')
         self.TCP_IP = rfsensit_element.find('post_address').text
         self.TCP_PORT = int(rfsensit_element.find('post_port').text)
         self.BUFFER_SIZE = int(rfsensit_element.find('post_buffer_size').text)
+        '''
 

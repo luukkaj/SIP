@@ -11,16 +11,14 @@ class CloudPost(object):
         print("Init cloud connection")
         self.channels = {}
         self.fields = {}
-        #self.supportedUUIDS = []
- 
+        
+        # Urls
+        self.get_channel_info_url = ''#'https://api.thingspeak.com/channels.json?api_key=' + self.user_api_key
+        self.create_channel_url = ''#'https://api.thingspeak.com/channels.json'
+        self.api_post_url = ''#'https://api.thingspeak.com/update.json'
+        
         self.settings_file = 'settings.xml'
         self.load_settings()
-        
-
-        # Urls
-        self.get_channel_info_url = 'https://api.thingspeak.com/channels.json?api_key=' + self.user_api_key
-        self.create_channel_url = 'https://api.thingspeak.com/channels.json'
-        self.api_post_url = 'https://api.thingspeak.com/update.json'
 
         # Variables
         self.account_info = None
@@ -28,7 +26,7 @@ class CloudPost(object):
     def create_channel(self, address):
         # parsed_address = address.replace(":", "")
 
-        data = {'api_key': self.user_api_key,  'name' : 'IAQP device: ' + address, 'description': address} # 'field1' : 'Ambient Temperature', 'field2' : 'Ambient Humidity', 'field3' : 'Silver Detector', 'field4' : 'Core Temperature' }
+        data = {'api_key': self.user_api_key,  'name' : 'IAQP device: ' + address, 'description': address} 
         print("Data before updating:\n{}".format(data));
         print("self.fields before updating:\n{}".format(self.fields));
         data.update(self.fields)
@@ -108,6 +106,12 @@ class CloudPost(object):
         parsed_file = xml.etree.ElementTree.parse(self.settings_file).getroot()
         found_keys = parsed_file.find('api_keys')
         self.user_api_key = str(found_keys.find('user_api_key').text)
+        
+        found_addresses = parsed_file.find('thingspeak')
+        self.get_channel_info_url = str(found_addresses.find('info_address').text) + self.user_api_key
+        self.create_channel_url = str(found_addresses.find('create_channel_address').text)
+        self.api_post_url = str(found_addresses.find('post_address').text)
+        
         uuid_root = parsed_file.find('uuids')
         for atype in uuid_root.findall('uuid'):
             new_field = {}

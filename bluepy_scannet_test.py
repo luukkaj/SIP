@@ -20,7 +20,7 @@ def load_recognized_characteristics():
     print("Parsed UUIDs:\n".format(chars))
     recognizedServices[BLE_SERVICE_ENVIRONMENT] = chars
         
-load_recognized_characteristics()
+#load_recognized_characteristics()
 
 
 '''
@@ -32,7 +32,7 @@ recognizedServices = dict()
 recognizedServices[BLE_SERVICE_ENVIRONMENT] = [BLE_CHAR_TEMPERATURE, BLE_CHAR_HUMIDITY]
 print("Services dictionary:")
 '''
-print(recognizedServices)
+#print(recognizedServices)
 
 
 class ScanDelegate(DefaultDelegate):
@@ -164,6 +164,7 @@ def readCharacteristicsToBuffer(peripheral):
 
 
 def main():
+	load_recognized_characteristics()
 	cloud = CloudPost()
 	cloud.get_channel_information()
   
@@ -203,7 +204,7 @@ def main():
 				print("Post failed")
 		
 		print("Time: {}\n".format(datetime.datetime.now()))
-		time.sleep(60)
+		time.sleep(10*60)
 
 
 if __name__ == "__main__":
