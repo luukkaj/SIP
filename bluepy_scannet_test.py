@@ -130,12 +130,13 @@ def preparePeripheral(device):
 	services = peripheral.getServices()
 	for ser in services:
 		if ser.uuid in recognizedServices.keys():
-			print("  Found recognized service: {}".format(ser.uuid))
+			#print("  Found recognized service: {}".format(ser.uuid))
 			serChar = ser.getCharacteristics()
 			for char in serChar:
+				#print("Found char: {}".format(char.uuid))
 				if char.uuid in recognizedServices[str(ser.uuid)]:
 					handle = char.getHandle()
-					print("   -with recognized charachteristic: {}\t({})".format(char.uuid.getCommonName(),char.uuid))
+					#print("   -with recognized charachteristic: {}\t({})".format(char.uuid.getCommonName(),char.uuid))
 					#print("      -with handle: 0x{:02X}".format(handle))
 					cccHandle = getCCCHandle(peripheral, handle)
 					#print ("      -CCC handle: 0x{:02X}".format(cccHandle))
@@ -164,11 +165,12 @@ def readCharacteristicsToBuffer(peripheral):
 
 
 def main():
-	load_recognized_characteristics()
-	cloud = CloudPost()
-	cloud.get_channel_information()
-  
-	while True:
+  load_recognized_characteristics()
+  cloud = CloudPost()
+  cloud.get_channel_information()
+  loop_counter = 0
+  while True:
+		loop_counter = loop_counter + 1
 		# Scan for devices until found
 		devices = []
 		while not len(devices):
@@ -180,7 +182,11 @@ def main():
 	  	print("Preparing peripherals:")
 	  	for device in devices:
 	  		print(" Peripheral:\t{}".format(device.addr))
-			peripherals.append(preparePeripheral(device))
+	  		try:
+				peripherals.append(preparePeripheral(device))
+			except:
+				print("Failed to prepare peripheral")
+				break
 
 		# See if a Thingspeak channel exists for this device
 		# Create a new channel if not
@@ -189,22 +195,29 @@ def main():
 				peripheral.channel = cloud.channels[peripheral.addr.upper()]
 	  		else:
 	  			peripheral.channel = cloud.create_channel(peripheral.addr.upper())
-		
+
 		# Read all connected devices characteristics
 		# Add them to a buffer and post to the cloud
 		print("\n")
 		for peripheral in peripherals:
 			print(peripheral.addr)
-			readCharacteristicsToBuffer(peripheral)
-			try:	  
+			time.sleep(2);//Wait for the peripheral to write all measurements
+			try:
+				readCharacteristicsToBuffer(peripheral)
+			except:
+				print("Failed to read characteristics")
+				break
+
+			try:
 				print("\n")
 				peripheral.channel.post()
 				peripheral.disconnect()
 			except:
 				print("Post failed")
-		
-		print("Time: {}\n".format(datetime.datetime.now()))
-		time.sleep(10*60)
+	
+			print("Time: {}\n".format(datetime.datetime.now()))
+			time.sleep(5*60)
+
 
 
 if __name__ == "__main__":
