@@ -165,24 +165,25 @@ def readCharacteristicsToBuffer(peripheral):
 
 
 def main():
-  load_recognized_characteristics()
-  cloud = CloudPost()
-  cloud.get_channel_information()
-  loop_counter = 0
-  while True:
+	load_recognized_characteristics()
+	cloud = CloudPost()
+	cloud.get_channel_information()
+	loop_counter = 0
+	
+	while True:
 		loop_counter = loop_counter + 1
 		# Scan for devices until found
 		devices = []
 		while not len(devices):
 			devices = scanIAQDevices();
-		
+
 		# Prepare peripherals
 		# Read recognized services and characteristics and enable adding a channel
-	  	peripherals = []
-	  	print("Preparing peripherals:")
-	  	for device in devices:
-	  		print(" Peripheral:\t{}".format(device.addr))
-	  		try:
+		peripherals = []
+		print("Preparing peripherals:")
+		for device in devices:
+			print(" Peripheral:\t{}".format(device.addr))
+			try:
 				peripherals.append(preparePeripheral(device))
 			except:
 				print("Failed to prepare peripheral")
@@ -193,15 +194,15 @@ def main():
 		for peripheral in peripherals:
 			if peripheral.addr.upper() in cloud.channels.keys():
 				peripheral.channel = cloud.channels[peripheral.addr.upper()]
-	  		else:
-	  			peripheral.channel = cloud.create_channel(peripheral.addr.upper())
+			else:
+				peripheral.channel = cloud.create_channel(peripheral.addr.upper())
 
 		# Read all connected devices characteristics
 		# Add them to a buffer and post to the cloud
 		print("\n")
 		for peripheral in peripherals:
 			print(peripheral.addr)
-			time.sleep(2);//Wait for the peripheral to write all measurements
+			time.sleep(2);#Wait for the peripheral to write all measurements
 			try:
 				readCharacteristicsToBuffer(peripheral)
 			except:
@@ -214,9 +215,9 @@ def main():
 				peripheral.disconnect()
 			except:
 				print("Post failed")
-	
-			print("Time: {}\n".format(datetime.datetime.now()))
-			time.sleep(5*60)
+
+		print("Time: {}\n".format(datetime.datetime.now()))
+		time.sleep(5*60)
 
 
 
