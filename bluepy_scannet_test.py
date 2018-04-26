@@ -88,7 +88,7 @@ def scanForDevices():
 	return devices;
 
 def scanIAQDevices():
-	print("\nScanning for devices....")
+	#print("\nScanning for devices....")
 	iaq_devices = [];
 	devices = scanForDevices()
 	for dev in devices:
@@ -97,7 +97,7 @@ def scanIAQDevices():
 				if "IAQ" in value:
 					iaq_devices.append(dev);
 					print("  -{} \t({}) \tRSSI={} dB".format(value, dev.addr, dev.rssi))
-	print("Scan complete\n");
+	#print("Scan complete\n");
 	return iaq_devices
   
 def printAdvertisingInformation(device):
@@ -135,18 +135,19 @@ def preparePeripheral(device):
 			for char in serChar:
 				#print("Found char: {}".format(char.uuid))
 				if char.uuid in recognizedServices[str(ser.uuid)]:
-					handle = char.getHandle()
+					#handle = char.getHandle()
 					#print("   -with recognized charachteristic: {}\t({})".format(char.uuid.getCommonName(),char.uuid))
 					#print("      -with handle: 0x{:02X}".format(handle))
-					cccHandle = getCCCHandle(peripheral, handle)
+					#cccHandle = getCCCHandle(peripheral, handle)
 					#print ("      -CCC handle: 0x{:02X}".format(cccHandle))
 					#peripheral.availableHandles.append(cccHandle)
-					peripheral.availableHandles[char.uuid]  = cccHandle
+					#peripheral.availableHandles[char.uuid]  = cccHandle
 					peripheral.availabeChararacteristics.append(char)
 
 	return peripheral
 
 def readCharacteristicsToBuffer(peripheral):
+	print("reading from peripheral: {}".format(peripheral.addr))
 	for char in peripheral.availabeChararacteristics:
 				for uuids in peripheral.channel.supportedUUIDS:
 					if uuids['name'] == char.uuid:
@@ -174,9 +175,11 @@ def main():
 		loop_counter = loop_counter + 1
 		# Scan for devices until found
 		devices = []
+		print("Started scanning for devices:\t{}".format(datetime.datetime.now()))
 		while not len(devices):
 			devices = scanIAQDevices();
-
+		print("Scan complete")
+		'''
 		# Prepare peripherals
 		# Read recognized services and characteristics and enable adding a channel
 		peripherals = []
@@ -187,37 +190,70 @@ def main():
 				peripherals.append(preparePeripheral(device))
 			except:
 				print("Failed to prepare peripheral")
+				try:
+					peripheral.disconnect()
+				except:
+					print("\n*************************************")
+					print("Failed to diconnect")
+					print("*************************************\n")
+					break
 				break
 
 		# See if a Thingspeak channel exists for this device
 		# Create a new channel if not
 		for peripheral in peripherals:
+			print("Peripheral address: {}".format(peripheral.addr))
 			if peripheral.addr.upper() in cloud.channels.keys():
 				peripheral.channel = cloud.channels[peripheral.addr.upper()]
 			else:
 				peripheral.channel = cloud.create_channel(peripheral.addr.upper())
-
+		'''
 		# Read all connected devices characteristics
 		# Add them to a buffer and post to the cloud
 		print("\n")
-		for peripheral in peripherals:
-			print(peripheral.addr)
+		#for peripheral in peripherals:
+		for device in devices:
+			try:
+				peripheral = preparePeripheral(device)
+			except:
+				print("Failed to prepare peripheral")
+				break
+			print("Peripheral address: {}".format(peripheral.addr))
+			if peripheral.addr.upper() in cloud.channels.keys():
+				peripheral.channel = cloud.channels[peripheral.addr.upper()]
+			else:
+				peripheral.channel = cloud.create_channel(peripheral.addr.upper())
+				
 			time.sleep(2);#Wait for the peripheral to write all measurements
 			try:
 				readCharacteristicsToBuffer(peripheral)
 			except:
 				print("Failed to read characteristics")
+				try:
+					peripheral.disconnect()
+				except:
+					print("\n*************************************")
+					print("Failed to diconnect")
+					print("*************************************\n")
+					break
 				break
-
+			
 			try:
 				print("\n")
 				peripheral.channel.post()
 				peripheral.disconnect()
 			except:
 				print("Post failed")
+				try:
+					peripheral.disconnect()
+				except:
+					print("\n*************************************")
+					print("Failed to diconnect")
+					print("*************************************\n")
+					break
 
 		print("Time: {}\n".format(datetime.datetime.now()))
-		time.sleep(5*60)
+		time.sleep(3*60)
 
 
 
