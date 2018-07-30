@@ -69,7 +69,7 @@ class CloudPost(object):
 
     def parse_channel_info(self, response):
 
-        self.channels = {}
+        #self.channels = {}
         print("Parsing ---------------")
         #print(response)
         

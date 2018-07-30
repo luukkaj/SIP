@@ -27,13 +27,13 @@ class Channel():
             data['field' + pair['field']] = pair['value']
         try:
             r = requests.post(self.api_post_url, data)
-            print("Response before json:\n{}".format(r))
+            #print("Response before json:\n{}".format(r))
             response = r.json()
             self.buffer = []
         except requests.exceptions.ConnectionError as e:
             print('Connection Error')
             response = e
-        print("\nRESPONSE #")
+        print("RESPONSE #")
         print(response)
         print("\n")
     

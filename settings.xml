@@ -54,7 +54,17 @@
             <factor>0.01</factor>
             <unit>C</unit>
         </uuid>
+    	<uuid>
+            <name>e0bbcb11-b2ff-9690-3842-5eabcdcb1ac1</name>
+            <sensor>Water tension</sensor>
+            <location>ambience</location>
+            <data_type>H</data_type>
+            <field>7</field>
+            <factor>1</factor>
+            <unit>units</unit>
+     	</uuid>
     </uuids>
+
     <api_keys>
         <user_api_key>N4AFCUMMDV8NGNIU</user_api_key>
     </api_keys>

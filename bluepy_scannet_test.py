@@ -92,11 +92,14 @@ def scanIAQDevices():
 	iaq_devices = [];
 	devices = scanForDevices()
 	for dev in devices:
-		for (adtype, desc, value) in dev.getScanData():
-			if (desc == "Complete Local Name"):
-				if "IAQ" in value:
-					iaq_devices.append(dev);
-					print("  -{} \t({}) \tRSSI={} dB".format(value, dev.addr, dev.rssi))
+		try:
+			for (adtype, desc, value) in dev.getScanData():
+				if (desc == "Complete Local Name"):
+					if "IAQ Feather52" in value:
+						iaq_devices.append(dev);
+						print("  -{} \t({}) \tRSSI={} dB".format(value, dev.addr, dev.rssi))
+		except:
+			print("Failed to get scan data from found device");
 	#print("Scan complete\n");
 	return iaq_devices
   
@@ -120,23 +123,36 @@ def getCCCHandle(peripheral, handle):
 
 
 def preparePeripheral(device):
+	#print("  preparing peripheral:")
+	print("     - address: \t{}".format(device.addr))
+	print("     - addresstype: \t{}".format(device.addrType))
+	print("     - interface: \t{}".format(device.iface))
+	print("     - connectable: \t{}".format(device.connectable))
 	peripheral = Peripheral(device)#devices[0].addr, devices[0].addrType)
+	#peripheral = Peripheral(device.addr,device.addrType,device.iface)
+	print("  peripheral set")
 	peripheral.setDelegate(MyDelegate(peripheral))
+	print("  delegate set")
 	Peripheral.availableHandles = {} # Dictionary containing ['UUID' : cccHandle]
 	Peripheral.availabeChararacteristics = []
 	#peripheral.connect()
-	time.sleep(2)
-
-	services = peripheral.getServices()
+	time.sleep(3)
+	print("  getting services")
+	try:
+		services = peripheral.getServices()
+	except:
+		print("Failed to get services")
+		return 0
+	print("  displaying services")
 	for ser in services:
 		if ser.uuid in recognizedServices.keys():
-			#print("  Found recognized service: {}".format(ser.uuid))
+			print("  Found recognized service: {}".format(ser.uuid))
 			serChar = ser.getCharacteristics()
 			for char in serChar:
 				#print("Found char: {}".format(char.uuid))
 				if char.uuid in recognizedServices[str(ser.uuid)]:
 					#handle = char.getHandle()
-					#print("   -with recognized charachteristic: {}\t({})".format(char.uuid.getCommonName(),char.uuid))
+					print("   -with recognized charachteristic: {}\t({})".format(char.uuid.getCommonName(),char.uuid))
 					#print("      -with handle: 0x{:02X}".format(handle))
 					#cccHandle = getCCCHandle(peripheral, handle)
 					#print ("      -CCC handle: 0x{:02X}".format(cccHandle))
@@ -147,7 +163,7 @@ def preparePeripheral(device):
 	return peripheral
 
 def readCharacteristicsToBuffer(peripheral):
-	print("reading from peripheral: {}".format(peripheral.addr))
+	#print("reading from peripheral: {}".format(peripheral.addr))
 	for char in peripheral.availabeChararacteristics:
 				for uuids in peripheral.channel.supportedUUIDS:
 					if uuids['name'] == char.uuid:
@@ -175,39 +191,13 @@ def main():
 		loop_counter = loop_counter + 1
 		# Scan for devices until found
 		devices = []
-		print("Started scanning for devices:\t{}".format(datetime.datetime.now()))
+		print("\nStarted scanning for devices at {}...".format(datetime.datetime.now()))
+		scanloop = 0
 		while not len(devices):
 			devices = scanIAQDevices();
 		print("Scan complete")
-		'''
-		# Prepare peripherals
-		# Read recognized services and characteristics and enable adding a channel
-		peripherals = []
-		print("Preparing peripherals:")
-		for device in devices:
-			print(" Peripheral:\t{}".format(device.addr))
-			try:
-				peripherals.append(preparePeripheral(device))
-			except:
-				print("Failed to prepare peripheral")
-				try:
-					peripheral.disconnect()
-				except:
-					print("\n*************************************")
-					print("Failed to diconnect")
-					print("*************************************\n")
-					break
-				break
 
-		# See if a Thingspeak channel exists for this device
-		# Create a new channel if not
-		for peripheral in peripherals:
-			print("Peripheral address: {}".format(peripheral.addr))
-			if peripheral.addr.upper() in cloud.channels.keys():
-				peripheral.channel = cloud.channels[peripheral.addr.upper()]
-			else:
-				peripheral.channel = cloud.create_channel(peripheral.addr.upper())
-		'''
+
 		# Read all connected devices characteristics
 		# Add them to a buffer and post to the cloud
 		print("\n")
@@ -215,9 +205,17 @@ def main():
 		for device in devices:
 			try:
 				peripheral = preparePeripheral(device)
+				if (peripheral == 0):
+					break
 			except:
 				print("Failed to prepare peripheral")
-				break
+				try:
+					peripheral.disconnect()
+					break
+				except:
+					print("failed to disconnect")
+					break
+			
 			print("Peripheral address: {}".format(peripheral.addr))
 			if peripheral.addr.upper() in cloud.channels.keys():
 				peripheral.channel = cloud.channels[peripheral.addr.upper()]
